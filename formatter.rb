@@ -14,8 +14,6 @@ rescue OptionParser::InvalidOption, OptionParser::MissingArgument
   exit(2)
 end
 
-comment = '\/\/.*'
-
 $attributes_group = '\((.*?)\)'
 $name_and_type_group = '(.*)'
 $comment_group = '(\/?\/? .*)'
@@ -23,16 +21,16 @@ $comment_group = '(\/?\/? .*)'
 def parse_line(line) 
   case line
   when / ^ \s* @property \s* #{$attributes_group} \s* #{$name_and_type_group} ; #{$comment_group}/x
-    return format_property(line, Regexp.last_match)
+    return format_property line, Regexp.last_match
   when / ^ \s* [+-] \s* \( .+ \) \s* .+ /x
-    return format_method(line, Regexp.last_match)
+    return format_method line, Regexp.last_match
   else
     return line
   end
 end
 
 def compress_whitespace(string)
-  string.gsub(/\s+/, " ")
+  string.gsub /\s+/, " "
 end
 
 
@@ -46,7 +44,7 @@ def format_property(line, match_data)
   end.sort do |a, b|
     (property_attribute_order.index(a) || 9999) <=> (property_attribute_order.index(b) || 9999)
   end
-  attributes_string = attributes_array.join(", ")
+  attributes_string = attributes_array.join ", "
 
   # Extract name and type
   name_and_type_string = compress_whitespace match_data[2].strip
@@ -81,7 +79,7 @@ output_file = File.new output_file_name, "w"
 File.open(input_file_name) do |file|
   file.each_line do |line|
     new_line = parse_line line
-    output_file.write(new_line.rstrip + "\n") if new_line
+    output_file.write new_line if new_line
   end
 end
 
