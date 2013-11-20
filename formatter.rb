@@ -21,9 +21,9 @@ $comment_group = '(\/?\/? .*)'
 def parse_line(line) 
   p line
   case line
-  when / ^ \s* @property \s* #{$attributes_group} \s* #{$name_and_type_group} ; #{$comment_group}/x
+  when /^ \s* @property \s* #{$attributes_group} \s* #{$name_and_type_group} ; #{$comment_group} /x
     new_line = format_property line, Regexp.last_match
-  when / ^ \s* [+-] \s* \( .+ \) \s* .+ /x
+  when /^ \s* [+-] \s* \( .+ \) \s* .+ /x
     new_line =  format_method line, Regexp.last_match
   else
     new_line = line
@@ -53,7 +53,7 @@ def format_property(line, match_data)
   # Extract name and type
   name_and_type_string = compress_whitespace match_data[2].strip
   # Remove any spaces after asterisks
-  name_and_type_string.gsub! /\s* \* \s*/x, " *"
+  name_and_type_string.gsub! /\s* \* \s* /x, " *"
 
   # Extract comment
   comment_string = match_data[3].strip
@@ -69,24 +69,24 @@ def format_method(line, match_data)
   comment = line.split('//')[1]
 
   # Strip space around parens and colon
-  line_without_comment.gsub! /\s* ([():]) \s*/x, '\1'
+  line_without_comment.gsub! /\s* ([():]) \s* /x, '\1'
   
   # Format plus or minus
   # Whitespace between '+/-' and '(' will have just been removed.
   line_without_comment.gsub! /\s* ([+-]) \( /x, '\1 ('
   
   # Fix space around asterisk
-  line_without_comment.gsub! /([^*\s\t\r\n\f]) \s* \* \s*/x, '\1 *'
+  line_without_comment.gsub! /([^*\s\t\r\n\f]) \s* \* \s* /x, '\1 *'
   
   # Fix space around opening brace
-  line_without_comment.gsub! /\s* {/x, ' {'
+  line_without_comment.gsub! /\s* { /x, ' {'
   
   # Strip space before semicolon
-  line_without_comment.gsub! /\s* ;/x, ';'
+  line_without_comment.gsub! /\s* ; /x, ';'
 
   new_line = line_without_comment
   new_line += "//" + comment if comment
-  return new_line
+  new_line
 end 
 
 input_file_name = unparsed.first
