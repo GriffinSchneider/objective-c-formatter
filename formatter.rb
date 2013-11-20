@@ -58,7 +58,7 @@ def format_property(line, match_data)
   # Extract comment
   comment_string = match_data[3].strip
   
-  return "@property \(#{attributes_string}\) #{name_and_type_string}; #{comment_string}\n"
+  "@property (#{attributes_string}) #{name_and_type_string}; #{comment_string}\n"
 end
 
 def format_method(line, match_data)
@@ -84,9 +84,7 @@ def format_method(line, match_data)
   # Strip space before semicolon
   line_without_comment.gsub! /\s* ; /x, ';'
 
-  new_line = line_without_comment
-  new_line += "//" + comment if comment
-  new_line
+  comment ? "//" + comment : line_without_comment
 end 
 
 input_file_name = unparsed.first
