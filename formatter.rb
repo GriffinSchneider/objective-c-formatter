@@ -65,7 +65,7 @@ def format_method(line, match_data)
   line = compress_whitespace line
 
   # If there's a comment at the end of the line, split it out and replace it later
-  line_without_comment = line.split('//')[0]
+  line_without_comment = line.split('//')[0].rstrip
   comment = line.split('//')[1]
 
   # Strip space around parens and colon
@@ -84,7 +84,7 @@ def format_method(line, match_data)
   # Strip space before semicolon
   line_without_comment.gsub! /\s* ; /x, ';'
 
-  comment ? "//" + comment : line_without_comment
+  comment ? line_without_comment + " //" + comment : line_without_comment
 end 
 
 input_file_name = unparsed.first
