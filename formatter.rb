@@ -19,24 +19,28 @@ $name_and_type_group = '(.*)'
 $comment_group = '(\/?\/? .*)'
 
 def parse_line(line) 
+  p line
   case line
   when / ^ \s* @property \s* #{$attributes_group} \s* #{$name_and_type_group} ; #{$comment_group}/x
-    return format_property line, Regexp.last_match
+    new_line = format_property line, Regexp.last_match
   when / ^ \s* [+-] \s* \( .+ \) \s* .+ /x
-    return format_method line, Regexp.last_match
+    new_line =  format_method line, Regexp.last_match
   else
-    return line
+    new_line = line
   end
+  
+  return new_line.gsub(/\t/, "    ").rstrip + "\n"
 end
 
 def compress_whitespace(string)
   string.gsub /\s+/, " "
 end
 
-
 def format_property(line, match_data)
-  
-  property_attribute_order = ["atomic", "nonatomic", "strong", "weak", "assign", "copy", "readonly", "readwrite"]
+  property_attribute_order =
+    ["atomic", "nonatomic", "strong",
+     "weak", "unsafe_unretained" "assign",
+     "copy", "readonly", "readwrite"]
 
   # Extract and sort property attributes
   attributes_array = match_data[1].split(",").collect do |a|
@@ -60,15 +64,29 @@ end
 def format_method(line, match_data)
   line = compress_whitespace line
 
-  # Strip space around parens, colon, and semicolon
-  line.gsub! /\s* ([():;]) \s*/x, '\1'
+  # If there's a comment at the end of the line, split it out and replace it later
+  line_without_comment = line.split('//')[0]
+  comment = line.split('//')[1]
+
+  # Strip space around parens and colon
+  line_without_comment.gsub! /\s* ([():]) \s*/x, '\1'
+  
   # Format plus or minus
   # Whitespace between '+/-' and '(' will have just been removed.
-  line.gsub! /\s* [+-] \( /x, '- ('
-  # Fix space around asterisk
-  line.gsub! /([^*\s\t\r\n\f]) \s* \* \s*/x, '\1 *'
+  line_without_comment.gsub! /\s* ([+-]) \( /x, '\1 ('
   
-  return line
+  # Fix space around asterisk
+  line_without_comment.gsub! /([^*\s\t\r\n\f]) \s* \* \s*/x, '\1 *'
+  
+  # Fix space around opening brace
+  line_without_comment.gsub! /\s* {/x, ' {'
+  
+  # Strip space before semicolon
+  line_without_comment.gsub! /\s* ;/x, ';'
+
+  new_line = line_without_comment
+  new_line += "//" + comment if comment
+  return new_line
 end 
 
 input_file_name = unparsed.first
@@ -76,10 +94,24 @@ output_file_name = unparsed.last
 
 output_file = File.new output_file_name, "w"
 
+output_file_text = ""
 File.open(input_file_name) do |file|
   file.each_line do |line|
     new_line = parse_line line
-    output_file.write new_line if new_line
+    previous_line = output_file_text[(output_file_text.rindex("\n", -2) || -1)+1..-1] if output_file_text.length
+    
+    # If the line we're about to add contains only an opening brace and the line above
+    # the lone brace doesn't end in a comment, then move the lone brace up to the line
+    # where it belongs
+    if new_line.strip == "{" and not previous_line.match /\/\//
+      output_file_text.rstrip!
+      output_file_text += " {\n"
+    elsif new_line
+      output_file_text += new_line
+    end
   end
+  
 end
 
+output_file.write output_file_text
+output_file.close
