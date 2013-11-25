@@ -79,7 +79,7 @@ def format_method(line, match_data)
   line_without_comment.gsub! /([^*\s\t\r\n\f]) \s* \* \s* /x, '\1 *'
   
   # Fix space around opening brace
-  line_without_comment.gsub! /\s* { /x, ' {'
+  line_without_comment.gsub! /\s* \{ /x, ' {'
   
   # Strip space before semicolon
   line_without_comment.gsub! /\s* ; /x, ';'
